@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://charmingoh.com/"/>
-  <updated>2017-01-14T15:40:17.000Z</updated>
+  <updated>2017-03-19T15:10:46.000Z</updated>
   <id>http://charmingoh.com/</id>
   
   <author>
@@ -14,6 +14,122 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>如何发布项目到 Maven 中央仓库</title>
+    <link href="http://charmingoh.com/2017/02/16/how-to-deploy-your-artifacts-to-the-central-repository/"/>
+    <id>http://charmingoh.com/2017/02/16/how-to-deploy-your-artifacts-to-the-central-repository/</id>
+    <published>2017-02-16T15:00:09.000Z</published>
+    <updated>2017-03-19T15:10:46.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>在公司用 Maven 发布项目的时候，执行 <code>mvn deploy</code> 会将依赖上传到公司自己的 Maven 私服上，只有在 settings.xml 上配置了公司 Maven 私服地址才能够下载此依赖。但是其他的依赖如 <code>guava</code> 这些依赖无论是否配置公司 Maven 私服地址，都能够引用下载。那我能不能也写一个工具上传到这个地方，不需要配置 Maven 私服地址就能够使用呢？带着这个问题，我开始了我的探索历程。</p>
+<h2 id="找到真正的方法"><a href="#找到真正的方法" class="headerlink" title="找到真正的方法"></a>找到真正的方法</h2><ol>
+<li>Google “maven deploy”，找到 <a href="https://maven.apache.org/guides/mini/guide-central-repository-upload.html" target="_blank" rel="external">Guide to uploading artifacts to the Central Repository</a></li>
+<li>这篇文章大部分讲的是 Apache 开源软件如何发布到 Central Repository，也提到了其余开源项目如何发布——<a href="http://central.sonatype.org/pages/ossrh-guide.html" target="_blank" rel="external">Open Source Software Repository Hosting (OSSRH)</a>；</li>
+<li>锁定目标，就是这篇文章了，沉下心来看懂实践；</li>
+</ol>
+<h2 id="如何发布项目到-Maven-Central-Repository"><a href="#如何发布项目到-Maven-Central-Repository" class="headerlink" title="如何发布项目到 Maven Central Repository"></a>如何发布项目到 Maven Central Repository</h2><p>以下所有步骤都提炼自 <a href="http://central.sonatype.org/pages/ossrh-guide.html" target="_blank" rel="external">Open Source Software Repository Hosting (OSSRH)</a>，有条件的话尽量看原文。另外，如果以下步骤与原文不一样，请以原文为主。</p>
+<h3 id="〇、开始之前"><a href="#〇、开始之前" class="headerlink" title="〇、开始之前"></a>〇、开始之前</h3><p>在开始之前你需要有：</p>
+<ul>
+<li>GitHub 账户；</li>
+<li>GitHub Maven 项目；</li>
+</ul>
+<h3 id="一、注册-JIRA-账户"><a href="#一、注册-JIRA-账户" class="headerlink" title="一、注册 JIRA 账户"></a>一、注册 JIRA 账户</h3><p>点击注册：<a href="https://issues.sonatype.org/secure/Signup!default.jspa" target="_blank" rel="external">https://issues.sonatype.org/secure/Signup!default.jspa</a></p>
+<h3 id="二、创建项目的-Issue"><a href="#二、创建项目的-Issue" class="headerlink" title="二、创建项目的 Issue"></a>二、创建项目的 Issue</h3><p>点击创建：<a href="https://issues.sonatype.org/secure/CreateIssue.jspa?issuetype=21&amp;pid=10134" target="_blank" rel="external">https://issues.sonatype.org/secure/CreateIssue.jspa?issuetype=21&amp;pid=10134</a> ，表单中的一些说明请不要忽略。一下是注意事项：</p>
+<ul>
+<li>Summary 建议填写 artifactId；</li>
+<li>Group Id 要特别注意，最好与下面的项目主页地址差不多，比如 <code>io.github.username</code> 或者<br><code>com.github.username</code> 都是很容易审核通过的；如果你填写的是自己域名，比如我填写得是<br><code>com.charmingoh</code>，管理员会问你这个网站是不是你的，你需要向管理员说明；</li>
+<li>Project URL 是项目主页，一般填写 GitHub 的项目主页，我填写的是：<a href="https://github.com/charmingoh/awesome-java-lib" target="_blank" rel="external">https://github.com/charmingoh/awesome-java-lib</a></li>
+<li>SCM url 是项目的版本控制地址，我填写的是：<a href="https://github.com/charmingoh/awesome-java-lib.git" target="_blank" rel="external">https://github.com/charmingoh/awesome-java-lib.git</a></li>
+</ul>
+<p>我的项目地址是：<a href="https://issues.sonatype.org/browse/OSSRH-28006" target="_blank" rel="external">https://issues.sonatype.org/browse/OSSRH-28006</a></p>
+<h3 id="三、等待管理员审核"><a href="#三、等待管理员审核" class="headerlink" title="三、等待管理员审核"></a>三、等待管理员审核</h3><p>如果你发布项目的时候管理员在上班（美国），那么你的项目很快就会有审核消息，保持关注就行了。如果管理员有问题，需要在你创建的 Issue 详情下回复。</p>
+<p>如果审核通过，管理员会回复：</p>
+<blockquote>
+<p>Configuration has been prepared, now you can:<br>……</p>
+</blockquote>
+<p>在等待的时间，可以执行第四步。</p>
+<h3 id="四、生成-PGP-签名"><a href="#四、生成-PGP-签名" class="headerlink" title="四、生成 PGP 签名"></a>四、生成 PGP 签名</h3><p>以下所有步骤都提炼自 <a href="http://central.sonatype.org/pages/working-with-pgp-signatures.html" target="_blank" rel="external">Working with PGP Signatures</a>，有条件的话尽量看原文。</p>
+<ul>
+<li>安装 GPG；<ul>
+<li>可以在官方直接下载，<a href="http://www.gnupg.org/download/" target="_blank" rel="external">http://www.gnupg.org/download/</a></li>
+<li>也可以用你喜欢的包管理工具下载，如 Ubuntu 下的 apt-get，CentOS 下的 yum，Mac 下的 Homebrew</li>
+<li>我是 Mac 用户，直接用 Homebrew，<code>brew install gpg</code></li>
+<li>执行 <code>gpg --version</code> 或者 <code>gpg2 --version</code> 看是否安装成功；</li>
+</ul>
+</li>
+<li>生成密钥；<ul>
+<li>执行 <code>gpg --gen-key</code></li>
+<li>两次回车：选择默认的 <code>RSA and RSA</code> 和 <code>2048bit</code>；</li>
+<li>选择密钥的有效期，我直接回车选择永久（官方建议 2 年及一下）；</li>
+<li>填写你的名字、邮箱、Comment；</li>
+<li>输入 passphrase（记下来）；</li>
+</ul>
+</li>
+</ul>
+<h3 id="五、规范-pom-xml"><a href="#五、规范-pom-xml" class="headerlink" title="五、规范 pom.xml"></a>五、规范 pom.xml</h3><p>以下所有步骤都提炼自 <a href="http://central.sonatype.org/pages/requirements.html" target="_blank" rel="external">Requirements</a> 和 <a href="http://central.sonatype.org/pages/apache-maven.html" target="_blank" rel="external">Deploying to OSSRH with Apache Maven</a> ，有条件的话尽量看原文。</p>
+<p>开源软件发布到 Central Repository 需要将文件进行 PGP 签名，并且提供源代码、Java doc、项目元数据等，这些工作都大部分都在在 pom.xml 做，可参考以下 pom.xml：</p>
+<ul>
+<li>官方 demo：<a href="https://github.com/simpligility/ossrh-demo/blob/master/pom.xml" target="_blank" rel="external">https://github.com/simpligility/ossrh-demo/blob/master/pom.xml</a></li>
+<li>我的：<a href="https://github.com/charmingoh/awesome-java-lib/blob/master/pom.xml" target="_blank" rel="external">https://github.com/charmingoh/awesome-java-lib/blob/master/pom.xml</a><ul>
+<li>我升级了 maven-gpg-plugin 的版本号；</li>
+<li>我这个项目的 package 方式是 pom，不需要上传源代码和 Java doc，如果 package 方式是 jar，请参考官方 demo 添加 <code>maven-source-plugin</code> 和 <code>maven-javadoc-plugin</code></li>
+</ul>
+</li>
+</ul>
+<p>pom.xml 要求：</p>
+<ul>
+<li>正确的 groupId / artifactId / version / packaging</li>
+<li>需要 name、description、url、developers 信息、SCM 信息</li>
+<li>需要开源许可证 licenses<ul>
+<li>可以看看阮一峰老师的<a href="http://www.ruanyifeng.com/blog/2011/05/how_to_choose_free_software_licenses.html" target="_blank" rel="external">《如何选择开源许可证？》</a></li>
+</ul>
+</li>
+<li><p>添加 distributionManagement</p>
+  <figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">distributionManagement</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">snapshotRepository</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>ossrh<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">url</span>&gt;</span>https://oss.sonatype.org/content/repositories/snapshots<span class="tag">&lt;/<span class="name">url</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">snapshotRepository</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">repository</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>ossrh<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">url</span>&gt;</span>https://oss.sonatype.org/service/local/staging/deploy/maven2/<span class="tag">&lt;/<span class="name">url</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">repository</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">distributionManagement</span>&gt;</span></div></pre></td></tr></table></figure>
+</li>
+<li><p>settings.xml 配置 ossrh 的用户名和密码为步骤一注册的 JIRA 用户名和密码</p>
+  <figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">settings</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">servers</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">server</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">id</span>&gt;</span>ossrh<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">username</span>&gt;</span>your-jira-id<span class="tag">&lt;/<span class="name">username</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">password</span>&gt;</span>your-jira-pwd<span class="tag">&lt;/<span class="name">password</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">server</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">servers</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">settings</span>&gt;</span></div></pre></td></tr></table></figure>
+</li>
+<li><p>添加 <code>maven-source-plugin</code> 和 <code>maven-javadoc-plugin</code>（最新版本到官网找）</p>
+  <figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">build</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">plugins</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-source-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.0.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">executions</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">execution</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">id</span>&gt;</span>attach-sources<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">goals</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">goal</span>&gt;</span>jar-no-fork<span class="tag">&lt;/<span class="name">goal</span>&gt;</span></div><div class="line">          <span class="tag">&lt;/<span class="name">goals</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">execution</span>&gt;</span></div><div class="line">      <span class="tag">&lt;/<span class="name">executions</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-javadoc-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.10.4<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">executions</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">execution</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">id</span>&gt;</span>attach-javadocs<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">goals</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">goal</span>&gt;</span>jar<span class="tag">&lt;/<span class="name">goal</span>&gt;</span></div><div class="line">          <span class="tag">&lt;/<span class="name">goals</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">execution</span>&gt;</span></div><div class="line">      <span class="tag">&lt;/<span class="name">executions</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">plugins</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">build</span>&gt;</span></div></pre></td></tr></table></figure>
+</li>
+<li><p>添加签名插件 maven-gpg-plugin；</p>
+  <figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">build</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">plugins</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-gpg-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.6<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">executions</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">execution</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">id</span>&gt;</span>sign-artifacts<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">phase</span>&gt;</span>verify<span class="tag">&lt;/<span class="name">phase</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">goals</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">goal</span>&gt;</span>sign<span class="tag">&lt;/<span class="name">goal</span>&gt;</span></div><div class="line">          <span class="tag">&lt;/<span class="name">goals</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">execution</span>&gt;</span></div><div class="line">      <span class="tag">&lt;/<span class="name">executions</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">plugins</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">build</span>&gt;</span></div></pre></td></tr></table></figure>
+</li>
+<li><p>在 settings.xml 添加你的 passphrase(步骤四记住的)；</p>
+  <figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">settings</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">profiles</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">profile</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">id</span>&gt;</span>ossrh<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">activation</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">activeByDefault</span>&gt;</span>true<span class="tag">&lt;/<span class="name">activeByDefault</span>&gt;</span></div><div class="line">      <span class="tag">&lt;/<span class="name">activation</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">properties</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">gpg.executable</span>&gt;</span>gpg<span class="tag">&lt;/<span class="name">gpg.executable</span>&gt;</span> <span class="comment">&lt;!-- 可执行文件也可能是 gpg2 --&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">gpg.passphrase</span>&gt;</span>the_pass_phrase<span class="tag">&lt;/<span class="name">gpg.passphrase</span>&gt;</span></div><div class="line">      <span class="tag">&lt;/<span class="name">properties</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">profile</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">profiles</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">settings</span>&gt;</span></div></pre></td></tr></table></figure>
+</li>
+<li><p>添加 nexus-staging-maven-plugin</p>
+  <figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">plugin</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.sonatype.plugins<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>nexus-staging-maven-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.6.7<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">extensions</span>&gt;</span>true<span class="tag">&lt;/<span class="name">extensions</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">serverId</span>&gt;</span>ossrh<span class="tag">&lt;/<span class="name">serverId</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">nexusUrl</span>&gt;</span>https://oss.sonatype.org/<span class="tag">&lt;/<span class="name">nexusUrl</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">autoReleaseAfterClose</span>&gt;</span>true<span class="tag">&lt;/<span class="name">autoReleaseAfterClose</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="六、正式发布"><a href="#六、正式发布" class="headerlink" title="六、正式发布"></a>六、正式发布</h3><p>此步骤必须建立在步骤三完成的基础上，即在 JIRA 发布的 Issue 必须被管理员审核通过。</p>
+<ul>
+<li>执行 <code>mvn clean deploy</code>；</li>
+<li>在你创建的 Issue 下面回复管理员说你的软件发布了；<ul>
+<li>可参考我的：<a href="https://issues.sonatype.org/browse/OSSRH-28006" target="_blank" rel="external">https://issues.sonatype.org/browse/OSSRH-28006</a></li>
+</ul>
+</li>
+<li>等待管理员回复；</li>
+<li>无需等待可以在 <a href="https://oss.sonatype.org" target="_blank" rel="external">https://oss.sonatype.org</a> 上搜索到自己的项目；</li>
+<li>管理员回复后两个小时可以在 search.maven.org 上搜索到自己的项目，然后别人就无需额外配置 Maven 私服就能够使用你发布的软件了^_^</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这个过程折腾了挺久的，从一开始找的中文资料，再到后来找到官方文档沉下心来看，突然发现官方文档还是很容易看懂的。也体会到了官方文档的优势，毕竟是一手资源，官方肯定也会尽最大努力去让文档更加通熟易懂操作性强。一手资源时效性最强，而二手资源可能有些步骤不是最简单的或者配置不是最新的(包括本文也会有过时的时候)。所以还是持着这样一个态度：以官方文档资源为主，二手资源为辅。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;在公司用 Maven 发布项目的时候，执行 &lt;code&gt;mvn deploy&lt;/code&gt; 会将依赖上传到公司自己的 Maven 私服上，只有在 settings.xml 上配置了公司 Maven 私服地址才能够下载此依赖。但是其他的依赖如 &lt;code&gt;guava&lt;/cod
+    
+    </summary>
+    
+      <category term="Maven" scheme="http://charmingoh.com/categories/Maven/"/>
+    
+    
+      <category term="Maven" scheme="http://charmingoh.com/tags/Maven/"/>
+    
+  </entry>
   
   <entry>
     <title>Maven 引入 Spring 依赖的最佳方法</title>
@@ -60,9 +176,9 @@
       <category term="Spring" scheme="http://charmingoh.com/categories/Spring/"/>
     
     
-      <category term="Spring" scheme="http://charmingoh.com/tags/Spring/"/>
-    
       <category term="Maven" scheme="http://charmingoh.com/tags/Maven/"/>
+    
+      <category term="Spring" scheme="http://charmingoh.com/tags/Spring/"/>
     
   </entry>
   
