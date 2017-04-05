@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://charmingoh.com/"/>
-  <updated>2017-03-19T15:10:46.000Z</updated>
+  <updated>2017-04-05T13:10:06.000Z</updated>
   <id>http://charmingoh.com/</id>
   
   <author>
@@ -14,6 +14,44 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>标准的 Servlet web.xml 配置</title>
+    <link href="http://charmingoh.com/2017/04/05/standard-servlet-web-xml/"/>
+    <id>http://charmingoh.com/2017/04/05/standard-servlet-web-xml/</id>
+    <published>2017-04-05T12:31:59.000Z</published>
+    <updated>2017-04-05T13:10:06.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>标准的 Servlet web.xml 配置究竟怎么写？Servlet 2.5、Servlet 3.0、Servlet 3.1、Servlet 4.0 的 web.xml 有什么不同？困惑我许久的问题终于在一次安装 Tomcat 的时候找到了。</p>
+<p>Google <code>Tomcat GitHub</code> 就能找到 Tomcat 各个版本的源代码，其中 Servlet 程序示例中的 web.xml 就是标准的配置。</p>
+<h2 id="Servlet-3-1"><a href="#Servlet-3-1" class="headerlink" title="Servlet 3.1"></a>Servlet 3.1</h2><p>建议使用 Tomcat 8.0.x 运行的项目使用此 web.xml 配置。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">web-app</span> <span class="attr">xmlns</span>=<span class="string">"http://xmlns.jcp.org/xml/ns/javaee"</span></span></div><div class="line">  <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">  <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"</span></div><div class="line">  <span class="attr">version</span>=<span class="string">"3.1"</span> <span class="attr">metadata-complete</span>=<span class="string">"true"</span>&gt;</div><div class="line">  ...</div><div class="line"><span class="tag">&lt;/<span class="name">web-app</span>&gt;</span></div></pre></td></tr></table></figure>
+<h2 id="Servlet-3-0"><a href="#Servlet-3-0" class="headerlink" title="Servlet 3.0"></a>Servlet 3.0</h2><p>建议使用 Tomcat 7.0.x 运行的项目使用此 web.xml 配置。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">web-app</span> <span class="attr">xmlns</span>=<span class="string">"http://java.sun.com/xml/ns/javaee"</span></span></div><div class="line">  <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">  <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"</span></div><div class="line">  <span class="attr">version</span>=<span class="string">"3.0"</span> <span class="attr">metadata-complete</span>=<span class="string">"true"</span>&gt;</div><div class="line">  ...</div><div class="line"><span class="tag">&lt;/<span class="name">web-app</span>&gt;</span></div></pre></td></tr></table></figure>
+<h2 id="Servlet-2-5"><a href="#Servlet-2-5" class="headerlink" title="Servlet 2.5"></a>Servlet 2.5</h2><p>建议使用 Tomcat 6.0.x 运行的项目使用此 web.xml 配置。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">web-app</span> <span class="attr">xmlns</span>=<span class="string">"http://java.sun.com/xml/ns/javaee"</span></span></div><div class="line">   <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">   <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"</span></div><div class="line">   <span class="attr">version</span>=<span class="string">"2.5"</span>&gt;</div><div class="line">   ...</div><div class="line"><span class="tag">&lt;/<span class="name">web-app</span>&gt;</span></div></pre></td></tr></table></figure>
+<h2 id="Servlet-4-0"><a href="#Servlet-4-0" class="headerlink" title="Servlet 4.0"></a>Servlet 4.0</h2><p>建议使用 Tomcat 9.0.x(正式版未发布)运行的项目使用此 web.xml 配置。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">web-app</span> <span class="attr">xmlns</span>=<span class="string">"http://xmlns.jcp.org/xml/ns/javaee"</span></span></div><div class="line">  <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">  <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"</span></div><div class="line">  <span class="attr">version</span>=<span class="string">"4.0"</span> <span class="attr">metadata-complete</span>=<span class="string">"true"</span>&gt;</div><div class="line">  ...</div><div class="line"><span class="tag">&lt;/<span class="name">web-app</span>&gt;</span></div></pre></td></tr></table></figure>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
+<li><a href="http://tomcat.apache.org/whichversion.html" target="_blank" rel="external">Tomcat 版本与 Servlet 版本中对应的关系</a></li>
+<li><a href="https://github.com/apache/tomcat80/blob/trunk/webapps/manager/WEB-INF/web.xml" target="_blank" rel="external">Tomcat 8 源代码中 Servlet 3.1 示例 web.xml 配置</a></li>
+<li><a href="https://github.com/apache/tomcat70/blob/trunk/webapps/manager/WEB-INF/web.xml" target="_blank" rel="external">Tomcat 7 源代码中 Servlet 3.0 示例 web.xml 配置</a></li>
+<li><a href="https://github.com/apache/tomcat60/blob/trunk/webapps/manager/WEB-INF/web.xml" target="_blank" rel="external">Tomcat 6 源代码中 Servlet 2.5 示例 web.xml 配置</a></li>
+<li><a href="https://github.com/apache/tomcat/blob/trunk/webapps/manager/WEB-INF/web.xml" target="_blank" rel="external">Tomcat 9 源代码中 Servlet 4.0 示例 web.xml 配置</a></li>
+</ul>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;标准的 Servlet web.xml 配置究竟怎么写？Servlet 2.5、Servlet 3.0、Servlet 3.1、Servlet 4.0 的 web.xml 有什么不同？困惑我许久的问题终于在一次安装 Tomcat 的时候找到了。&lt;/p&gt;
+&lt;p&gt;Google 
+    
+    </summary>
+    
+    
+      <category term="Servlet" scheme="http://charmingoh.com/tags/Servlet/"/>
+    
+  </entry>
   
   <entry>
     <title>如何发布项目到 Maven 中央仓库</title>
@@ -176,9 +214,9 @@
       <category term="Spring" scheme="http://charmingoh.com/categories/Spring/"/>
     
     
-      <category term="Maven" scheme="http://charmingoh.com/tags/Maven/"/>
-    
       <category term="Spring" scheme="http://charmingoh.com/tags/Spring/"/>
+    
+      <category term="Maven" scheme="http://charmingoh.com/tags/Maven/"/>
     
   </entry>
   
